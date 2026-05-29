@@ -1,0 +1,20 @@
+# Desenvolvimento local: PostgreSQL + API (opcional)
+# Uso: docker compose up -d postgres
+# Depois rode a API com perfil default (localhost:5432) ou:
+#   SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/portal ...
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fffinance-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: portal
+      POSTGRES_DB: portal
+    volumes:
+      - fffinance_pgdata:/var/lib/postgresql/data
+
+volumes:
+  fffinance_pgdata:
