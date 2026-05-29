@@ -53,6 +53,12 @@ public class Lancamento {
 	@Column(nullable = false)
 	private Boolean pago = Boolean.FALSE;
 
+	@Column(name = "data_pagamento")
+	private LocalDate dataPagamento;
+
+	@Column(name = "id_login")
+	private Long idLogin;
+
 	@Column(name = "data_criacao", nullable = false, insertable = false, updatable = false)
 	private Instant dataCriacao;
 }

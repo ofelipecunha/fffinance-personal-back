@@ -4,6 +4,7 @@ import com.example.portal.dto.AlterarSenhaRequest;
 import com.example.portal.dto.LoginRequest;
 import com.example.portal.dto.LoginResponse;
 import com.example.portal.dto.PerfilUsuarioResponse;
+import com.example.portal.dto.PerfilUsuarioUpdateRequest;
 import com.example.portal.entity.LoginUsuario;
 import com.example.portal.repository.LoginUsuarioRepository;
 import java.io.IOException;
@@ -63,7 +64,7 @@ public class AuthService {
 					return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
 				});
 
-		if (!Boolean.TRUE.equals(usuario.getAtivo())) {
+		if (!isAtivo(usuario)) {
 			log.warn("Login falhou: utilizador inativo, e-mail [{}]", emailNorm);
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário inativo");
 		}
@@ -106,7 +107,7 @@ public class AuthService {
 		String token = extrairBearerToken(authorizationHeader);
 		return loginUsuarioRepository
 				.findByToken(token)
-				.filter(u -> Boolean.TRUE.equals(u.getAtivo()))
+				.filter(AuthService::isAtivo)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sessão inválida ou expirada"));
 	}
 
@@ -115,8 +116,41 @@ public class AuthService {
 		String token = extrairBearerToken(authorizationHeader);
 		LoginUsuario usuario = loginUsuarioRepository
 				.findByToken(token)
-				.filter(u -> Boolean.TRUE.equals(u.getAtivo()))
+				.filter(AuthService::isAtivo)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sessão inválida ou expirada"));
+		return toPerfil(usuario);
+	}
+
+	@Transactional
+	public PerfilUsuarioResponse atualizarPerfil(String authorizationHeader, PerfilUsuarioUpdateRequest body) {
+		LoginUsuario usuario = requireUsuarioPorBearer(authorizationHeader);
+		if (body == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Corpo da requisição em falta");
+		}
+		if (StringUtils.hasText(body.getNome())) {
+			usuario.setNome(body.getNome().trim());
+		}
+		if (StringUtils.hasText(body.getEmail())) {
+			String emailNorm = body.getEmail().trim();
+			if (loginUsuarioRepository.existsEmailForOther(emailNorm, usuario.getIdLogin())) {
+				throw new ResponseStatusException(HttpStatus.CONFLICT, "E-mail já está em uso");
+			}
+			usuario.setEmail(emailNorm);
+		}
+		if (body.getTelefone() != null) {
+			usuario.setTelefone(body.getTelefone().isBlank() ? null : body.getTelefone().trim());
+		}
+		if (body.getEndereco() != null) {
+			usuario.setEndereco(body.getEndereco().isBlank() ? null : body.getEndereco().trim());
+		}
+		if (body.getCidade() != null) {
+			usuario.setCidade(body.getCidade().isBlank() ? null : body.getCidade().trim());
+		}
+		if (body.getEstado() != null) {
+			String uf = body.getEstado().trim().toUpperCase(Locale.ROOT);
+			usuario.setEstado(uf.isBlank() ? null : uf);
+		}
+		loginUsuarioRepository.save(usuario);
 		return toPerfil(usuario);
 	}
 
@@ -163,6 +197,7 @@ public class AuthService {
 
 		String publicPath = "/api/files/avatars/" + filename;
 		usuario.setImagem(publicPath);
+		usuario.setImagemUrl(publicPath);
 		loginUsuarioRepository.save(usuario);
 		return toPerfil(usuario);
 	}
@@ -230,14 +265,40 @@ public class AuthService {
 		return token;
 	}
 
+	private static boolean isAtivo(LoginUsuario u) {
+		if (u == null || u.getAtivo() == null) {
+			return true;
+		}
+		return "S".equalsIgnoreCase(u.getAtivo().trim());
+	}
+
+	private static String perfilAcesso(LoginUsuario u) {
+		String p = u.getPerfil();
+		if (!StringUtils.hasText(p)) {
+			return "USUARIO";
+		}
+		return p.trim().toUpperCase(Locale.ROOT);
+	}
+
+	private static String imagemPublica(LoginUsuario u) {
+		if (StringUtils.hasText(u.getImagemUrl())) {
+			return u.getImagemUrl().trim();
+		}
+		return u.getImagem();
+	}
+
 	private static PerfilUsuarioResponse toPerfil(LoginUsuario u) {
 		return PerfilUsuarioResponse.builder()
 				.idLogin(u.getIdLogin())
 				.nome(u.getNome())
 				.sobrenome(u.getSobrenome())
 				.email(u.getEmail())
-				.imagem(u.getImagem())
+				.endereco(u.getEndereco())
+				.cidade(u.getCidade())
+				.estado(u.getEstado())
+				.imagem(imagemPublica(u))
 				.telefone(u.getTelefone())
+				.ativo(u.getAtivo())
 				.bio(u.getBio())
 				.cargo(u.getCargo())
 				.localizacao(u.getLocalizacao())
@@ -249,6 +310,7 @@ public class AuthService {
 				.urlTwitter(u.getUrlTwitter())
 				.urlLinkedin(u.getUrlLinkedin())
 				.urlInstagram(u.getUrlInstagram())
+				.perfil(perfilAcesso(u))
 				.build();
 	}
 
@@ -262,7 +324,7 @@ public class AuthService {
 				.findByEmailNormalized(request.getEmail().trim())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 
-		if (!Boolean.TRUE.equals(usuario.getAtivo())) {
+		if (!isAtivo(usuario)) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário inativo");
 		}
 

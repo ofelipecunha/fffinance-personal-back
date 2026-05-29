@@ -29,11 +29,17 @@ public class LoginUsuario {
 	@Column(nullable = false, unique = true, length = 150)
 	private String email;
 
+	@Column(length = 150)
+	private String login;
+
+	@Column(nullable = false, length = 30)
+	private String perfil = "USUARIO";
+
 	@Column(name = "senha_hash", nullable = false, length = 255)
 	private String senhaHash;
 
-	@Column(nullable = false)
-	private Boolean ativo = Boolean.TRUE;
+	@Column(nullable = false, length = 1)
+	private String ativo = "S";
 
 	@Column(length = 500)
 	private String token;
@@ -44,10 +50,22 @@ public class LoginUsuario {
 	@Column(length = 2048)
 	private String imagem;
 
+	@Column(name = "imagem_url", length = 500)
+	private String imagemUrl;
+
+	@Column(length = 255)
+	private String endereco;
+
+	@Column(length = 100)
+	private String cidade;
+
+	@Column(length = 2)
+	private String estado;
+
 	@Column(length = 150)
 	private String sobrenome;
 
-	@Column(length = 40)
+	@Column(length = 20)
 	private String telefone;
 
 	@Column(length = 500)

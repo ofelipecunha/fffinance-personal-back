@@ -18,8 +18,12 @@ public class PerfilUsuarioResponse {
 	private String nome;
 	private String sobrenome;
 	private String email;
+	private String endereco;
+	private String cidade;
+	private String estado;
 	private String imagem;
 	private String telefone;
+	private String ativo;
 	private String bio;
 	private String cargo;
 	private String localizacao;
@@ -31,4 +35,7 @@ public class PerfilUsuarioResponse {
 	private String urlTwitter;
 	private String urlLinkedin;
 	private String urlInstagram;
+
+	/** ADMIN | USUARIO */
+	private String perfil;
 }

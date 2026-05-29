@@ -39,4 +39,28 @@ public interface LancamentoRepository extends JpaRepository<Lancamento, Integer>
 	List<Lancamento> findAllOrderedFiltrado(
 			@Param("dataInicio") LocalDate dataInicio,
 			@Param("dataFim") LocalDate dataFim);
+
+	@Query("""
+			SELECT l FROM Lancamento l
+			JOIN FETCH l.categoria
+			LEFT JOIN FETCH l.formaPagamentoRef
+			WHERE l.idLogin = :idLogin
+			  AND l.dataLancamento >= :dataInicio
+			  AND l.dataLancamento < :dataFim
+			ORDER BY l.pago ASC, l.dataLancamento ASC, l.id DESC
+			""")
+	List<Lancamento> findByUsuarioAndPeriodo(
+			@Param("idLogin") Long idLogin,
+			@Param("dataInicio") LocalDate dataInicio,
+			@Param("dataFim") LocalDate dataFim);
+
+	@Query("""
+			SELECT l FROM Lancamento l
+			JOIN FETCH l.categoria
+			LEFT JOIN FETCH l.formaPagamentoRef
+			WHERE l.id = :id
+			  AND l.idLogin = :idLogin
+			""")
+	Optional<Lancamento> findDetalheDoUsuario(@Param("id") Integer id, @Param("idLogin") Long idLogin);
+
 }

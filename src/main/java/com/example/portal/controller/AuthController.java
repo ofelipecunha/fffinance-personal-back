@@ -5,6 +5,7 @@ import com.example.portal.dto.LoginRequest;
 import com.example.portal.dto.LoginResponse;
 import com.example.portal.dto.MensagemResponse;
 import com.example.portal.dto.PerfilUsuarioResponse;
+import com.example.portal.dto.PerfilUsuarioUpdateRequest;
 import com.example.portal.service.AuthService;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -91,6 +92,13 @@ public class AuthController {
 	public ResponseEntity<PerfilUsuarioResponse> perfilAtual(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
 		return ResponseEntity.ok(authService.perfilDoToken(authorization));
+	}
+
+	@PutMapping("/perfil")
+	public ResponseEntity<PerfilUsuarioResponse> atualizarPerfil(
+			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+			@Valid @RequestBody PerfilUsuarioUpdateRequest body) {
+		return ResponseEntity.ok(authService.atualizarPerfil(authorization, body));
 	}
 
 	/**
