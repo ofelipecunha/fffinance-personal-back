@@ -19,4 +19,7 @@ public class LoginResponse {
 	private String token;
 	/** URL ou caminho da foto de perfil (pode ser nulo). */
 	private String imagem;
+
+	/** ADMIN | USUARIO */
+	private String perfil;
 }

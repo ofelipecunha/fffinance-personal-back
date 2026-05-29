@@ -95,6 +95,7 @@ public class AuthService {
 				.email(usuario.getEmail())
 				.token(novoToken)
 				.imagem(usuario.getImagem())
+				.perfil(perfilAcesso(usuario))
 				.build();
 	}
 
