@@ -4,6 +4,10 @@ WORKDIR /app
 
 RUN apk add --no-cache maven
 
+# Invalida cache do Docker no Render quando migrações ou código mudam.
+ARG CACHEBUST=20260529-continhas-v8
+RUN echo "Build cache bust: ${CACHEBUST}"
+
 COPY pom.xml .
 COPY src ./src
 

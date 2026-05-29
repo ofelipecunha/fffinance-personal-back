@@ -55,3 +55,11 @@ WHERE version = '2';
 ```
 
 Ou use `flyway repair` no pipeline — **não** altere migrações já aplicadas em produção sem combinar com repair.
+
+## Render (produção)
+
+Se a API cair com `ativo` em `login_usuario` (`bpchar` vs `boolean`/`varchar`):
+
+1. Confirme no log do deploy: `Migrating schema ... to version "8"` (ou `"9"`), não só até `"3"`.
+2. Se o histórico parar em `3`, faça **Clear build cache** no Render e redeploy do serviço `fffinance-api`.
+3. Após subir, o histórico deve listar V4–V9; a V6/V9 convertem `ativo` para `VARCHAR(1)` compatível com a entidade Java.
