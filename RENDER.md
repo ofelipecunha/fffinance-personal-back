@@ -68,3 +68,17 @@ Substitua `NOME-DO-SERVICO-POSTGRES` pelo **Name** do Private Service (ex.: `fff
 2. Ajustar `SPRING_DATASOURCE_URL` na **fffinance-api**  
 3. Manual Deploy da API  
 4. `https://fffinance-api.onrender.com/api/health`
+
+---
+
+## Criar usuário de login (banco novo)
+
+Flyway cria as tabelas, mas **não** insere usuário. No **Shell** do Postgres ou via cliente SQL:
+
+1. Gere hash BCrypt da senha (local: classe `BcryptSenhaUtil` nos testes).
+2. Execute (ajuste e-mail/senha):
+
+```sql
+INSERT INTO login_usuario (nome, email, senha_hash, ativo)
+VALUES ('Admin', 'seu@email.com', 'HASH_BCRYPT_AQUI', TRUE);
+```

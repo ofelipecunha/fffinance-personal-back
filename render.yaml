@@ -40,4 +40,4 @@ services:
           name: fffinance-postgres
           envVarKey: POSTGRES_PASSWORD
       - key: APP_CORS_ALLOWED_ORIGINS
-        value: https://SEU-PROJETO.vercel.app
+        value: https://fffinance-personal.vercel.app,http://localhost:4200

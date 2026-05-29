@@ -40,7 +40,8 @@ public class SecurityConfig {
 		configuration.setAllowedOrigins(parseAllowedOrigins(allowedOrigins));
 		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(List.of("*"));
-		configuration.setAllowCredentials(true);
+		// Bearer no header — sem cookies; evita bloqueio CORS desnecessário no browser
+		configuration.setAllowCredentials(false);
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/api/**", configuration);
 		return source;
