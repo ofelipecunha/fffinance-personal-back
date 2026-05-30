@@ -3,6 +3,7 @@ package com.example.portal.service;
 import com.example.portal.dto.ContinhasCardResponse;
 import com.example.portal.dto.ContinhasPagoRequest;
 import com.example.portal.dto.ContinhasResumoResponse;
+import com.example.portal.dto.ContinhasUsuarioFiltroResponse;
 import com.example.portal.dto.LancamentoCreateRequest;
 import com.example.portal.dto.LancamentoUpdateRequest;
 import com.example.portal.entity.Categoria;
@@ -12,10 +13,16 @@ import com.example.portal.entity.LoginUsuario;
 import com.example.portal.repository.CategoriaRepository;
 import com.example.portal.repository.FormaPagamentoRepository;
 import com.example.portal.repository.LancamentoRepository;
+import com.example.portal.repository.LoginUsuarioRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,24 +37,35 @@ public class ContinhasService {
 	private final LancamentoRepository repository;
 	private final CategoriaRepository categoriaRepository;
 	private final FormaPagamentoRepository formaPagamentoRepository;
+	private final LoginUsuarioRepository loginUsuarioRepository;
 
-	public List<ContinhasCardResponse> listar(String authorization, LocalDate dataInicio, LocalDate dataFim) {
-		Long idLogin = idLogin(authorization);
-		validarPeriodo(dataInicio, dataFim);
-		return repository.findByUsuarioAndPeriodo(idLogin, dataInicio, dataFim).stream()
-				.map(this::paraCard)
+	public List<ContinhasUsuarioFiltroResponse> listarUsuariosFiltro(String authorization) {
+		authService.requireUsuarioPorBearer(authorization);
+		return loginUsuarioRepository.listarPorNome("").stream()
+				.filter(u -> "S".equalsIgnoreCase(trimToEmpty(u.getAtivo())))
+				.map(u -> new ContinhasUsuarioFiltroResponse(u.getIdLogin(), u.getNome()))
 				.toList();
 	}
 
-	public ContinhasResumoResponse resumo(String authorization, LocalDate dataInicio, LocalDate dataFim) {
-		Long idLogin = idLogin(authorization);
+	public List<ContinhasCardResponse> listar(
+			String authorization, LocalDate dataInicio, LocalDate dataFim, Long idLoginFiltro) {
+		authService.requireUsuarioPorBearer(authorization);
+		validarPeriodo(dataInicio, dataFim);
+		List<Lancamento> lista = buscarPorPeriodo(idLoginFiltro, dataInicio, dataFim);
+		Map<Long, String> nomes = carregarNomesUsuarios(lista);
+		return lista.stream().map(l -> paraCard(l, nomes)).toList();
+	}
+
+	public ContinhasResumoResponse resumo(
+			String authorization, LocalDate dataInicio, LocalDate dataFim, Long idLoginFiltro) {
+		authService.requireUsuarioPorBearer(authorization);
 		validarPeriodo(dataInicio, dataFim);
 		BigDecimal receitas = BigDecimal.ZERO;
 		BigDecimal despesas = BigDecimal.ZERO;
 		BigDecimal pagas = BigDecimal.ZERO;
 		BigDecimal pendentes = BigDecimal.ZERO;
 
-		for (Lancamento l : repository.findByUsuarioAndPeriodo(idLogin, dataInicio, dataFim)) {
+		for (Lancamento l : buscarPorPeriodo(idLoginFiltro, dataInicio, dataFim)) {
 			BigDecimal valor = l.getValor();
 			if ("RECEITA".equals(l.getTipo())) {
 				receitas = receitas.add(valor);
@@ -72,7 +90,8 @@ public class ContinhasService {
 		e.setIdLogin(usuario.getIdLogin());
 		aplicarCampos(e, dto.descricao(), dto.valor(), dto.dataLancamento(), dto.categoriaId(), dto.tipo(),
 				dto.formaPagamentoId(), dto.pago() != null ? dto.pago() : Boolean.FALSE);
-		return paraCard(repository.save(e));
+		Map<Long, String> nomes = carregarNomesUsuarios(List.of(e));
+		return paraCard(repository.save(e), nomes);
 	}
 
 	@Transactional
@@ -80,7 +99,8 @@ public class ContinhasService {
 		Lancamento e = requireLancamento(authorization, id);
 		aplicarCampos(e, dto.descricao(), dto.valor(), dto.dataLancamento(), dto.categoriaId(), dto.tipo(),
 				dto.formaPagamentoId(), dto.pago());
-		return paraCard(repository.save(e));
+		Map<Long, String> nomes = carregarNomesUsuarios(List.of(e));
+		return paraCard(repository.save(e), nomes);
 	}
 
 	@Transactional
@@ -89,7 +109,8 @@ public class ContinhasService {
 		boolean pago = Boolean.TRUE.equals(body.pago());
 		e.setPago(pago);
 		e.setDataPagamento(pago ? LocalDate.now() : null);
-		return paraCard(repository.save(e));
+		Map<Long, String> nomes = carregarNomesUsuarios(List.of(e));
+		return paraCard(repository.save(e), nomes);
 	}
 
 	@Transactional
@@ -99,13 +120,31 @@ public class ContinhasService {
 	}
 
 	private Lancamento requireLancamento(String authorization, Integer id) {
-		Long idLogin = idLogin(authorization);
-		return repository.findDetalheDoUsuario(id, idLogin)
+		authService.requireUsuarioPorBearer(authorization);
+		return repository.findDetalhe(id)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conta não encontrada"));
 	}
 
-	private Long idLogin(String authorization) {
-		return authService.requireUsuarioPorBearer(authorization).getIdLogin();
+	private List<Lancamento> buscarPorPeriodo(Long idLoginFiltro, LocalDate dataInicio, LocalDate dataFim) {
+		if (idLoginFiltro == null) {
+			return repository.findByPeriodo(dataInicio, dataFim);
+		}
+		return repository.findByUsuarioAndPeriodo(idLoginFiltro, dataInicio, dataFim);
+	}
+
+	private Map<Long, String> carregarNomesUsuarios(List<Lancamento> lista) {
+		Set<Long> ids = lista.stream()
+				.map(Lancamento::getIdLogin)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toSet());
+		if (ids.isEmpty()) {
+			return Map.of();
+		}
+		Map<Long, String> nomes = new HashMap<>();
+		for (LoginUsuario u : loginUsuarioRepository.findAllById(ids)) {
+			nomes.put(u.getIdLogin(), u.getNome());
+		}
+		return nomes;
 	}
 
 	private static void validarPeriodo(LocalDate dataInicio, LocalDate dataFim) {
@@ -150,8 +189,10 @@ public class ContinhasService {
 		e.setDataPagamento(pago ? (e.getDataPagamento() != null ? e.getDataPagamento() : LocalDate.now()) : null);
 	}
 
-	private ContinhasCardResponse paraCard(Lancamento l) {
+	private ContinhasCardResponse paraCard(Lancamento l, Map<Long, String> nomes) {
 		FormaPagamento fp = l.getFormaPagamentoRef();
+		Long idLogin = l.getIdLogin();
+		String usuarioNome = idLogin != null ? nomes.getOrDefault(idLogin, "Usuário") : null;
 		return new ContinhasCardResponse(
 				l.getId(),
 				l.getDescricao(),
@@ -163,7 +204,9 @@ public class ContinhasService {
 				fp != null ? fp.getNome() : null,
 				Boolean.TRUE.equals(l.getPago()) ? "S" : "N",
 				l.getDataLancamento(),
-				l.getDataPagamento());
+				l.getDataPagamento(),
+				idLogin,
+				usuarioNome);
 	}
 
 	private static String normalizarTipo(String raw) {
@@ -180,6 +223,10 @@ public class ContinhasService {
 		}
 		String t = s.trim();
 		return t.isEmpty() ? null : t;
+	}
+
+	private static String trimToEmpty(String s) {
+		return s == null ? "" : s.trim();
 	}
 
 }

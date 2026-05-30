@@ -3,6 +3,7 @@ package com.example.portal.controller;
 import com.example.portal.dto.ContinhasCardResponse;
 import com.example.portal.dto.ContinhasPagoRequest;
 import com.example.portal.dto.ContinhasResumoResponse;
+import com.example.portal.dto.ContinhasUsuarioFiltroResponse;
 import com.example.portal.dto.LancamentoCreateRequest;
 import com.example.portal.dto.LancamentoUpdateRequest;
 import com.example.portal.service.ContinhasService;
@@ -32,20 +33,28 @@ public class ContinhasController {
 
 	private final ContinhasService service;
 
+	@GetMapping("/usuarios")
+	public List<ContinhasUsuarioFiltroResponse> usuariosFiltro(
+			@RequestHeader(value = "Authorization", required = false) String authorization) {
+		return service.listarUsuariosFiltro(authorization);
+	}
+
 	@GetMapping
 	public List<ContinhasCardResponse> listar(
 			@RequestHeader(value = "Authorization", required = false) String authorization,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
-		return service.listar(authorization, dataInicio, dataFim);
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+			@RequestParam(required = false) Long idLogin) {
+		return service.listar(authorization, dataInicio, dataFim, idLogin);
 	}
 
 	@GetMapping("/resumo")
 	public ContinhasResumoResponse resumo(
 			@RequestHeader(value = "Authorization", required = false) String authorization,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
-		return service.resumo(authorization, dataInicio, dataFim);
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+			@RequestParam(required = false) Long idLogin) {
+		return service.resumo(authorization, dataInicio, dataFim, idLogin);
 	}
 
 	@PostMapping

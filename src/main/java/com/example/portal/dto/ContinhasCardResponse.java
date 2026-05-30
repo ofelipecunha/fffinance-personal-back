@@ -14,4 +14,6 @@ public record ContinhasCardResponse(
 		String formaPagamento,
 		String pago,
 		LocalDate data,
-		LocalDate dataPagamento) {}
+		LocalDate dataPagamento,
+		Long idLogin,
+		String usuarioNome) {}

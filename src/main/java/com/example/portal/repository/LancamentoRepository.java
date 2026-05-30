@@ -44,6 +44,18 @@ public interface LancamentoRepository extends JpaRepository<Lancamento, Integer>
 			SELECT l FROM Lancamento l
 			JOIN FETCH l.categoria
 			LEFT JOIN FETCH l.formaPagamentoRef
+			WHERE l.dataLancamento >= :dataInicio
+			  AND l.dataLancamento < :dataFim
+			ORDER BY l.pago ASC, l.dataLancamento ASC, l.id DESC
+			""")
+	List<Lancamento> findByPeriodo(
+			@Param("dataInicio") LocalDate dataInicio,
+			@Param("dataFim") LocalDate dataFim);
+
+	@Query("""
+			SELECT l FROM Lancamento l
+			JOIN FETCH l.categoria
+			LEFT JOIN FETCH l.formaPagamentoRef
 			WHERE l.idLogin = :idLogin
 			  AND l.dataLancamento >= :dataInicio
 			  AND l.dataLancamento < :dataFim
