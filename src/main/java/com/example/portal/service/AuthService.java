@@ -54,18 +54,18 @@ public class AuthService {
 
 	@Transactional
 	public LoginResponse login(LoginRequest request) {
-		String emailNorm = request.getEmail() != null ? request.getEmail().trim() : "";
+		String loginNorm = request.getLogin() != null ? request.getLogin().trim() : "";
 		String senhaDigitada = request.getSenha() != null ? request.getSenha().trim() : "";
 
 		LoginUsuario usuario = loginUsuarioRepository
-				.findByEmailNormalized(emailNorm)
+				.findByLoginNormalized(loginNorm)
 				.orElseThrow(() -> {
-					log.warn("Login falhou: nenhum registo com e-mail (após trim) igual a [{}]", emailNorm);
+					log.warn("Login falhou: nenhum registo com login (após trim) igual a [{}]", loginNorm);
 					return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
 				});
 
 		if (!isAtivo(usuario)) {
-			log.warn("Login falhou: utilizador inativo, e-mail [{}]", emailNorm);
+			log.warn("Login falhou: utilizador inativo, login [{}]", loginNorm);
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário inativo");
 		}
 
@@ -73,8 +73,8 @@ public class AuthService {
 			int hashLen = usuario.getSenhaHash() != null ? usuario.getSenhaHash().length() : -1;
 			boolean bcrypt = isBcryptHash(usuario.getSenhaHash());
 			log.warn(
-					"Login falhou: senha incorreta para e-mail [{}]. Hash no BD: tamanho={}, parece BCrypt={}",
-					emailNorm,
+					"Login falhou: senha incorreta para login [{}]. Hash no BD: tamanho={}, parece BCrypt={}",
+					loginNorm,
 					hashLen,
 					bcrypt);
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");

@@ -20,6 +20,13 @@ public interface LoginUsuarioRepository extends JpaRepository<LoginUsuario, Long
 	@Query("SELECT u FROM LoginUsuario u WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(:email))")
 	Optional<LoginUsuario> findByEmailNormalized(@Param("email") String email);
 
+	@Query(
+			"""
+			SELECT u FROM LoginUsuario u
+			WHERE LOWER(TRIM(COALESCE(NULLIF(TRIM(u.login), ''), u.email))) = LOWER(TRIM(:login))
+			""")
+	Optional<LoginUsuario> findByLoginNormalized(@Param("login") String login);
+
 	Optional<LoginUsuario> findByToken(String token);
 
 	@Query(

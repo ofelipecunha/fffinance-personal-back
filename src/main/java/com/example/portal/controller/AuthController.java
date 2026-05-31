@@ -43,10 +43,10 @@ public class AuthController {
 				"loginPost", Map.of(
 						"metodo", "POST",
 						"url", "/api/auth/login",
-						"bodyJson", "{ \"email\": \"...\", \"senha\": \"...\" }"),
+						"bodyJson", "{ \"login\": \"...\", \"senha\": \"...\" }"),
 				"loginGetDev", Map.of(
 						"metodo", "GET",
-						"url", "/api/auth/login?email=...&senha=...",
+						"url", "/api/auth/login?login=...&senha=...",
 						"aviso", "Senha na URL é insegura; use só em desenvolvimento."),
 				"alterarSenha", Map.of(
 						"metodo", "PUT",
@@ -68,16 +68,16 @@ public class AuthController {
 	 */
 	@GetMapping("/login")
 	public ResponseEntity<LoginResponse> loginGet(
-			@RequestParam String email,
+			@RequestParam String login,
 			@RequestParam String senha) {
-		if (email.isBlank() || senha.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe email e senha");
+		if (login.isBlank() || senha.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe login e senha");
 		}
-		return ResponseEntity.ok(authService.login(new LoginRequest(email.trim(), senha)));
+		return ResponseEntity.ok(authService.login(new LoginRequest(login.trim(), senha)));
 	}
 
 	/**
-	 * Autentica por e-mail e senha, persiste um token opaco em {@code login_usuario.token} e retorna os dados (sem hash de senha).
+	 * Autentica por login e senha, persiste um token opaco em {@code login_usuario.token} e retorna os dados (sem hash de senha).
 	 */
 	@PostMapping("/login")
 	public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest body) {
