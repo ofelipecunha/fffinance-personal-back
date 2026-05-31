@@ -2,6 +2,7 @@ package com.example.portal.repository;
 
 import com.example.portal.entity.TipoLista;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -30,4 +31,6 @@ public interface TipoListaRepository extends JpaRepository<TipoLista, Integer> {
 			ORDER BY t.ordem ASC, t.nome ASC
 			""", nativeQuery = true)
 	List<Object[]> findCardResumoRows();
+
+	Optional<TipoLista> findByCodigo(String codigo);
 }

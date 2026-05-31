@@ -9,39 +9,28 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.Instant;
-import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "lista")
+@Table(name = "item_anotacao")
 @Getter
 @Setter
 @NoArgsConstructor
-public class ListaCompra {
+public class ItemAnotacao {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@JoinColumn(name = "tipo_id", nullable = false)
-	private TipoLista tipo;
+	@JoinColumn(name = "anotacao_id", nullable = false)
+	private AnotacaoMercado anotacao;
 
 	@Column(nullable = false, length = 150)
 	private String nome;
 
-	@Column(name = "data_criacao", nullable = false)
-	private Instant dataCriacao = Instant.now();
-
-	@Column(name = "id_login")
-	private Long idLogin;
-
-	@Column(name = "data_compra")
-	private LocalDate dataCompra = LocalDate.now();
-
 	@Column(nullable = false)
-	private Boolean finalizada = Boolean.FALSE;
+	private Integer quantidade = 1;
 }
