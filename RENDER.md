@@ -47,8 +47,11 @@ Quando estiver certo, o serviço roda **Postgres na porta 5432**, não Spring Bo
 | `SPRING_DATASOURCE_USERNAME` | `portal` |
 | `SPRING_DATASOURCE_PASSWORD` | *(igual ao POSTGRES_PASSWORD)* |
 | `APP_CORS_ALLOWED_ORIGINS` | `http://localhost:4200` |
+| `APP_UPLOAD_AVATARS_DIR` | `/tmp/fffinance-avatars` *(upload de foto de perfil)* |
 
 Substitua `NOME-DO-SERVICO-POSTGRES` pelo **Name** do Private Service (ex.: `fffinance-personal-back`).
+
+**Foto de perfil:** sem `APP_UPLOAD_AVATARS_DIR`, a API pode falhar com `Erro ao preparar armazenamento` (pasta `data/avatars` sem permissão no Docker). No plano free do Render os ficheiros em `/tmp` somem após redeploy.
 
 ---
 

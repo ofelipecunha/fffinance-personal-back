@@ -17,12 +17,16 @@ RUN mvn -DskipTests package -q
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN addgroup -S spring && adduser -S spring -G spring \
+    && mkdir -p /tmp/fffinance-avatars /app/data/avatars \
+    && chown -R spring:spring /app /tmp/fffinance-avatars
+
 USER spring:spring
 
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
 
 ENV SPRING_PROFILES_ACTIVE=prod
+ENV APP_UPLOAD_AVATARS_DIR=/tmp/fffinance-avatars
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
