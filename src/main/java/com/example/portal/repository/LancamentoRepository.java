@@ -75,4 +75,16 @@ public interface LancamentoRepository extends JpaRepository<Lancamento, Integer>
 			""")
 	Optional<Lancamento> findDetalheDoUsuario(@Param("id") Integer id, @Param("idLogin") Long idLogin);
 
+	@Query("""
+			SELECT l FROM Lancamento l
+			JOIN FETCH l.categoria
+			LEFT JOIN FETCH l.formaPagamentoRef
+			WHERE l.categoria.id = :categoriaId
+			  AND (:descricao IS NULL OR :descricao = '' OR LOWER(COALESCE(l.descricao, '')) LIKE LOWER(CONCAT('%', :descricao, '%')))
+			ORDER BY l.dataLancamento DESC, l.id DESC
+			""")
+	List<Lancamento> findByCategoriaIdAndDescricaoOpcional(
+			@Param("categoriaId") Integer categoriaId,
+			@Param("descricao") String descricao);
+
 }
